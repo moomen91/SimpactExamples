@@ -60,6 +60,9 @@ bestfitting.features.EAAA <- Seq.object$stats[index.bestfit, ]
 # Using the best-fitting model from the calibration
 inputvector.EAAA.example <- Seq.object$param[index.bestfit, ]
 
+debut_age <- c(14.6, 15.8, 15.0, 16.6, 17.3)
+cd4_values <- c(223.6, 333.9, 487.0, 121.3, 358.6)
+
 
 inputvector <- c(0, inputvector.EAAA.example)
 
@@ -90,7 +93,7 @@ cfg.list <- input.params.creator(population.eyecap.fraction = 1,
                                  formation.hazard.agegapry.gap_agescale_man = 0.25,
                                  formation.hazard.agegapry.gap_agescale_woman = 0.25,
                                  dissolution.alpha_4 = -0.05,
-                                 debut.debutage = 15,
+                                 debut.debutage = debut_age[5],
                                  conception.alpha_base = -2.7,
                                  dropout.interval.dist.type = "uniform")
 
@@ -165,7 +168,7 @@ art.intro["monitoring.cd4.threshold"] <- 100
 art.intro1 <- list()
 art.intro1["time"] <- 22
 art.intro1["diagnosis.baseline"] <- inputvector[16]  #+ inputvector[17] # prior [0, 2] # -1.8
-art.intro1["monitoring.cd4.threshold"] <- 500
+art.intro1["monitoring.cd4.threshold"] <- cd4_values[5]
 
 art.intro2 <- list()
 art.intro2["time"] <- 23
@@ -291,7 +294,7 @@ Edges <- data.frame(Parent=c(edges_1[,1]), Child=c(edges_1[,2]))
 
 # length(edges_1)
 G <- graph(edges=t(Edges), directed = TRUE)
-write_graph(graph = G, file = '/home/acer/Transmission_Networks/mixed//transmission_network_15_500.csv', format = 'edgelist')
+write_graph(graph = G, file = '/home/acer/Transmission_Networks/mixed/transmission_network.csv_17_358', format = 'edgelist')
 
   # distance matrix 
 dist_trans_network = dist(Edges)
@@ -312,6 +315,9 @@ plot(phylo_tree)
 
 library(phyloTop)
 library(ggtree)
+
+
+
 
 #ggtree(phylo_tree)
 
