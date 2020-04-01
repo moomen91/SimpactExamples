@@ -15,7 +15,7 @@ Sys.setenv(SIMPACT_DATA_DIR="/home/acer/simpact-cyan-0.21.0/data/")
 ## Load required packages
 library(RSimpactCyan)
 library(devtools)
-install_github("wdelva/RSimpactHelp")
+#install_github("wdelva/RSimpactHelp")
 library(RSimpactHelper)
 library(tidyverse)
 library(ggplot2)
@@ -46,12 +46,13 @@ target.features.EAAA <- c(features.pop.growth, features.hiv.prev, features.hiv.i
 # To find the best fitting model, we compute the RMSE for the 250 parameter combinations of the posterior.
 posterior.size <- nrow(Seq.object$stats)
 RMSE.vect <- rep(NA, posterior.size)
+
+
 for (i.posterior in 1:posterior.size){
   fitting.features.EAAA <- Seq.object$stats[i.posterior, ]
   # The RMSE compared to the target statistics was:
   RMSE.vect[i.posterior] <- sqrt(sum(((fitting.features.EAAA - target.features.EAAA)/target.features.EAAA)^2) / length(target.features.EAAA))
 }
-
 index.bestfit <- which(RMSE.vect == min(RMSE.vect))
 bestfitting.features.EAAA <- Seq.object$stats[index.bestfit, ]
 
@@ -89,7 +90,7 @@ cfg.list <- input.params.creator(population.eyecap.fraction = 1,
                                  formation.hazard.agegapry.gap_agescale_man = 0.25,
                                  formation.hazard.agegapry.gap_agescale_woman = 0.25,
                                  dissolution.alpha_4 = -0.05,
-                                 debut.debutage = 14,
+                                 debut.debutage = 15,
                                  conception.alpha_base = -2.7,
                                  dropout.interval.dist.type = "uniform")
 
@@ -163,22 +164,22 @@ art.intro["monitoring.cd4.threshold"] <- 100
 
 art.intro1 <- list()
 art.intro1["time"] <- 22
-art.intro1["diagnosis.baseline"] <- inputvector[16] + inputvector[17] # prior [0, 2] # -1.8
-art.intro1["monitoring.cd4.threshold"] <- 150
+art.intro1["diagnosis.baseline"] <- inputvector[16]  #+ inputvector[17] # prior [0, 2] # -1.8
+art.intro1["monitoring.cd4.threshold"] <- 500
 
 art.intro2 <- list()
 art.intro2["time"] <- 23
 art.intro2["diagnosis.baseline"] <- inputvector[16] + inputvector[17] + inputvector[18] # prior [0, 2] # -1.5
 art.intro2["monitoring.cd4.threshold"] <- 200
-
+# 
 art.intro3 <- list()
 art.intro3["time"] <- 30
 art.intro3["diagnosis.baseline"] <- inputvector[16] + inputvector[17] + inputvector[18] + inputvector[19] # prior [0, 2] #-1
 art.intro3["monitoring.cd4.threshold"] <- 350
-
+  
 art.intro4 <- list()
 art.intro4["time"] <- 33.5
-art.intro4["diagnosis.baseline"] <- inputvector[16] + inputvector[17] + inputvector[18] + inputvector[19] + inputvector[20] # prior [0, 2]
+art.intro4["diagnosis.baseline"] <- inputvector[16] #+ inputvector[17] + inputvector[18] + inputvector[19] + inputvector[20] # prior [0, 2]
 art.intro4["monitoring.cd4.threshold"] <- 500
 
 art.intro5 <- list()
@@ -186,7 +187,7 @@ art.intro5["time"] <- 36.75
 art.intro5["monitoring.cd4.threshold"] <- 6000
 
 
-ART.factual <- list(art.intro3)
+ART.factual <- list(art.intro, art.intro1, art.intro2, art.intro3, art.intro4, art.intro5)
 #art.intro,art.intro1, art.intro2, art.intro3, art.intro4, art.intro5
 
 identifier <- paste0(seedid)
@@ -195,7 +196,7 @@ destDir <- paste0(getwd(), "/temp")
 results <- tryCatch(simpact.run(configParams = cfg.list,
                                 destDir = destDir,
                                 agedist = age.distr,
-                                intervention = ART.factual,
+                                intervention = list(art.intro1),
                                 seed = seedid),
                     error = simpact.errFunction)
 datalist.phylo <- readthedata(results)
@@ -219,10 +220,11 @@ revised.network.fortified <- fortify(as.edgedf(revised.network.df), revised.netw
 
 revised.network.fortified_na = na.omit(revised.network.fortified)
 library(igraph)
+library(data.tree)
+edges1 = matrix(c(revised.network.fortified$from_id, revised.network.fortified$to_id),byrow = TRUE, ncol = 2)
 
+#G = graph_from_data_frame(revised.network.fortified_na, directed = TRUE, vertices = NULL)
 
-G = graph_from_data_frame(revised.network.fortified_na, directed = TRUE, vertices = NULL)
-network = write_csv(revised.network.fortified, path = '/home/acer/transmission_network.csv')
 
 # A. Transmission network
 # The transmission event from the "ghost infector with ID "-1" to the seed individual with ID "858" is excluded from the transmission network
@@ -275,8 +277,43 @@ plot_degree_distribution <-function(graph,a) {
     ggplot2::theme_gray()
 }
 
-plot_degree_distribution(G, 'out')
+#plot_degree_distribution(G, 'out')
 
-data = revised.network.fortified[2:nrow(revised.network.fortified), ] 
+#similarity_metric <- similarity(graph = G, vids = V(G), method = "invlogweighted")
 
+
+
+
+edges1 <- na.omit(edges1)
+inds <- which(duplicated(edges1) == TRUE)
+edges_1 <- edges1[-c(inds),]
+Edges <- data.frame(Parent=c(edges_1[,1]), Child=c(edges_1[,2]))
+
+# length(edges_1)
+G <- graph(edges=t(Edges), directed = TRUE)
+write_graph(graph = G, file = '/home/acer/Transmission_Networks/mixed//transmission_network_15_500.csv', format = 'edgelist')
+
+  # distance matrix 
+dist_trans_network = dist(Edges)
+
+# hierarchical clustering analysis
+clus_trans_network = hclust(dist_trans_network, method = "average")
+
+# plot dendrogram
+plot(clus_trans_network, hang = 0.1)
+
+library(ape)
+
+# convert 'hclust' to 'phylo' object
+
+phylo_tree = as.phylo(clus_trans_network)
+
+plot(phylo_tree)
+
+library(phyloTop)
+library(ggtree)
+
+#ggtree(phylo_tree)
+
+#topo_sort(G, mode='out')
 
