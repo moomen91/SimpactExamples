@@ -7,148 +7,138 @@
 # Some of these stats will be shown on a boxplot for the comparison with other graphs.
 library(igraph)
 library(tidyverse)
-g_names <- c('14_0', '15_0', '16_0', '17_0', '18_0', '15_100', '15_200', '15_300', '15_400',
-                '15_500', '14_224', '16_334', '15_487', '16_121', '17_358' )
+g_names <- c('15_0', '15_50', '15_100', '15_150', '15_200', '16_0', '16_50', '16_100', '16_150',
+             '16_200', '17_0', '17_50', '17_100', '17_150', '17_200', '18_0', '18_50', '18_100', 
+             '18_150', '18_200')
 Gs <- list()
 Trans <- list()
 Density <- list()
 Centrality <- list()
+Betw <- list()
+Eigen <- list()
+Dg_dist <- list()
+g_sizes <- list()
+degrees <- list()
 
 for (i in g_names){
-  Gs[[i]] <- assign(sprintf('g_%s', i), value = list())
-  Trans[[i]] <- assign(sprintf('trans_%s', i), value = list())
-  Density[[i]] <- assign(sprintf('density_%s', i), value = list())
-  Centrality[[i]] <-  assign(sprintf('cent_%s', i), value = list())
-  
+  #Gs[[i]] <- assign(sprintf('g_%s', i), value = list())
+  #Trans[[i]] <- assign(sprintf('trans_%s', i), value = list())
+  #Density[[i]] <- assign(sprintf('density_%s', i), value = list())
+  #Centrality[[i]] <-  assign(sprintf('cent_%s', i), value = list())
+
   for (j in 1:50) {
-    Gs[[i]] <- graph(t(read_csv(sprintf('~/Transmission_Networks/transmission_network_%s/%d.csv', i, j))))
+    Gs[[i]][[j]] <- graph(t(read_csv(sprintf('~/Transmission_Networks/TN_%s/%d.csv', i, j))))
+    Trans[[i]][[j]] <- transitivity(Gs[[i]][[j]], type = 'average')
+    Density[[i]][[j]] <- graph.density(Gs[[i]][[j]])
+    Centrality[[i]][[j]] <- centr_degree(Gs[[i]][[j]], mode='out')$centralization
+    #Betw[[i]][[j]] <- centr_betw(Gs[[i]][[j]])$centralization
+    g_sizes[[i]][[j]] <- gsize(Gs[[i]][[j]])
+    Eigen[[i]][[j]] <- centr_eigen(Gs[[i]][[j]], directed = TRUE)$value
+
+    d = degree(Gs[[i]][[j]], mode = "out")
+    dd = degree.distribution(Gs[[i]][[j]], mode = "out", cumulative = FALSE)
+    degree = 1:max(d)
+    probability = dd[-1]
+    # delete blank values
+    nonzero.position = which(probability != 0)
+    probability = probability[nonzero.position]
+    degree = degree[nonzero.position]
+    degrees[[i]][[j]] <- degree
+    Dg_dist[[i]][[j]] <- probability
   }
-}
-
-f1 <- '~/Transmission_Networks/no_intervention/transmission_network_14.csv'
-f2 <- '~/Transmission_Networks/no_intervention/transmission_network_15.csv'
-f3 <- '~/Transmission_Networks/no_intervention/transmission_network_16.csv'
-f4 <- '~/Transmission_Networks/no_intervention/transmission_network_17.csv'
-f5 <- '~/Transmission_Networks/no_intervention/transmission_network_18.csv'
-f6 <- '~/Transmission_Networks/Intervention/transmission_network_15_100.csv'
-f7 <- '~/Transmission_Networks/Intervention/transmission_network_15_200.csv'
-f8 <- '~/Transmission_Networks/Intervention/transmission_network_15_300.csv'
-f9 <- '~/Transmission_Networks/Intervention/transmission_network_15_400.csv'
-f10 <- '~/Transmission_Networks/Intervention/transmission_network_15_500.csv'
-#f11 <- '~/Transmission_Networks/Intervention/transmission_network_15_all.csv'
-f12 <- '~/Transmission_Networks/mixed/transmission_network_14_223.csv'
-f13 <- '~/Transmission_Networks/mixed/transmission_network_16_333.csv'
-f14 <- '~/Transmission_Networks/mixed/transmission_network_15_487.csv'
-f15 <- '~/Transmission_Networks/mixed/transmission_network_16_121.csv'
-f16 <- '~/Transmission_Networks/mixed/transmission_network_17_358.csv'
-
-g1 <- graph(t(read_csv(f1)), directed = TRUE)
-g2 <- graph(t(read_csv(f2)), directed = TRUE)
-g3 <- graph(t(read_csv(f3)), directed = TRUE)
-g4 <- graph(t(read_csv(f4)), directed = TRUE)
-g5 <- graph(t(read_csv(f5)), directed = TRUE)
-g6 <- graph(t(read_csv(f6)), directed = TRUE)
-g7 <- graph(t(read_csv(f7)), directed = TRUE)
-g8 <- graph(t(read_csv(f8)), directed = TRUE)
-g9 <- graph(t(read_csv(f9)), directed = TRUE)
-g10 <- graph(t(read_csv(f10)), directed = TRUE)
-g11 <- graph(t(read_csv(f11)), directed = TRUE)
-g12 <- graph(t(read_csv(f12)), directed = TRUE)
-g13 <- graph(t(read_csv(f13)), directed = TRUE)
-g14 <- graph(t(read_csv(f14)), directed = TRUE)
-g15 <- graph(t(read_csv(f15)), directed = TRUE)
-g16 <- graph(t(read_csv(f16)), directed = TRUE)
-
-trans_1 <- transitivity(g1, type = 'average')
-trans_2 <- transitivity(g2, type = 'average')
-trans_3 <- transitivity(g3, type = 'average')
-trans_4 <- transitivity(g4, type = 'average')
-trans_5 <- transitivity(g5, type = 'average')
-trans_6 <- transitivity(g6, type = 'average')
-trans_7 <- transitivity(g7, type = 'average')
-trans_8 <- transitivity(g8, type = 'average')
-trans_9 <- transitivity(g9, type = 'average')
-trans_10 <- transitivity(g10, type = 'average')
-trans_11 <- transitivity(g11, type = 'average')
-trans_12 <- transitivity(g12, type = 'average')
-trans_13 <- transitivity(g13, type = 'average')
-trans_14 <- transitivity(g14, type = 'average')
-trans_15 <- transitivity(g15, type = 'average')
-trans_16 <- transitivity(g16, type = 'average')
-
-d1 <- graph.density(g1)
-d2 <- graph.density(g2)
-d3 <- graph.density(g3)
-d4 <- graph.density(g4)
-d5 <- graph.density(g5)
-d6 <- graph.density(g6)
-d7 <- graph.density(g7)
-d8 <- graph.density(g8)
-d9 <- graph.density(g9)
-d10 <- graph.density(g10)
-d11 <- graph.density(g11)
-d12 <- graph.density(g12)
-d13 <- graph.density(g13)
-d14 <- graph.density(g14)
-d15 <- graph.density(g15)
-d16 <- graph.density(g16)
-
-cent_1 <- centr_degree(g1)
-cent_2 <- centr_degree(g2)
-cent_3 <- centr_degree(g3)
-cent_4 <- centr_degree(g4)
-cent_5 <- centr_degree(g5)
-cent_6 <- centr_degree(g6)
-cent_7 <- centr_degree(g7)
-cent_8 <- centr_degree(g8)
-cent_9 <- centr_degree(g9)
-cent_10 <- centr_degree(g10)
-cent_11 <- centr_degree(g11)
-cent_12 <- centr_degree(g12)
-cent_13 <- centr_degree(g13)
-cent_14 <- centr_degree(g14)
-cent_15 <- centr_degree(g15)
-cent_16 <- centr_degree(g16)
-
-trans_all <- c(trans_1, trans_2, trans_3, trans_4, trans_5, trans_6, trans_7, trans_8, trans_9, trans_10, trans_11, trans_12,
-                  trans_13, trans_14, trans_15, trans_16)
-density_all <- c(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16)
-
-cent_all <- c(cent_1$centralization, cent_2$centralization, cent_3$centralization, cent_4$centralization,
-                 cent_5$centralization, cent_6$centralization, cent_7$centralization, cent_8$centralization,
-                 cent_9$centralization, cent_10$centralization, cent_11$centralization, cent_12$centralization,
-                 cent_13$centralization, cent_14$centralization, cent_15$centralization, cent_16$centralization)
-
-
-
-plot_degree_distribution <-function(graph,a) {
-  d = igraph::degree(graph, mode = a)
-  dd = igraph::degree.distribution(graph, mode = a, cumulative = FALSE)
-  degree = 1:max(d)
-  probability = dd[-1]
-  nonzero.position = which(probability != 0)
-  probability = probability[nonzero.position]
-  degree = degree[nonzero.position]
   
-  TYPE<-paste0("Degree_",a)
-  TITLErev<-paste0("Degree Distribution_",a)
-  plotdata<-cbind(probability,degree)
-  plotdata<-as.data.frame(plotdata)
-  colnames(plotdata)<-c("probability","degree")
-  #graphics::plot(probability ~ degree, log = "xy", xlab = TYPE, ylab = "Probability (log)",
-  #     col = 1, main = TITLErev)
-  ggplot2::ggplot(plotdata, ggplot2::aes(x=degree, y=probability)) +
-    ggplot2::geom_line(color="darkred")+
-    ggplot2::geom_jitter(position = "jitter",color="darkred")+
-    ggplot2::labs(title=TITLErev,
-                  x=TYPE, y = "Probability")+
-    ggplot2::theme_gray()
+  #trans_all[,trans_i] <- c(Trans$i) 
+  #density_all[,i] <- c(Density$i)
+  #centrality_all[,i] <- c(Centrality$i)
+}
+Trans <- as.data.frame(Trans)
+Density <- as.data.frame(Density)
+Centrality <- as.data.frame(Centrality)
+Betw <- as.data.frame(Betw)
+Degs <- data.frame(degrees,Dg_dist )
+boxplot(Betw)
+boxplot(Density)
+boxplot(Centrality)
+write.csv(Trans, file = sprintf('~/Stats/Trans.csv'))
+write.csv(Density, file = sprintf('~/Stats/Density.csv'))
+write.csv(Centrality, file = sprintf('~/Stats/Centrality.csv'))
+write.csv(g_sizes, file = sprintf('~/Stats/Gsize.csv'))
+# First we concatenate the lists of degrees and their probabilities per type
+get_degree <- function(g_type) {
+  Deg_list <- list()
+  alist <- list()
+  for (i in 1:50){
+    dist <- degree_distribution(Gs[[g_type]][[i]], mode = 'out')
+    Deg_list <- c(Deg_list, dist)
+    alist <- c(alist, 1:length(dist))
+    
+  }
+  deg <- cbind(alist, Deg_list)
+  x <- cbind(alist, Deg_list)
+  deg <- as.data.frame(x)
+  
+  write.csv(as.matrix(deg), file = sprintf('~/Degrees/deg_%s.csv', g_type))
+            
+  }
+
+for (i in g_names){
+  get_degree(i)
 }
 
+unique_deg <- unique(Deg_list)
+max_deg <- max(unique_deg)
 
-plot_degree_distribution(g2, 'out')
-library("poweRlaw")
-library("ggplot2")
+
+get_degree_dist <- function(Gs_type) {
+
+  MaxDeg = rep(0, 50)
+  max_prob = 0
+  for(i in 1:50) {
+    
+    DD = Gs_type[[i]]
+    MaxDeg[i] = length(DD)
+    max_prob = max(DD)
+  }
+  MaxMax = max(MaxDeg)
+  max_max_prob = round(max_prob, digits = 1)
+  print(max_max_prob)
+  plot(1:MaxDeg[1], Gs_type[[1]], xlim = c(1, MaxMax), type = 'l',
+       log='xy', xlab='Log Degree', ylab='LogFrequency')
+  
+  
+  for (i in 2:50) {
+    lines(1:MaxDeg[i], Gs_type[[i]])  
+  }
+} 
+
+# plot_degree_distribution <-function(graph,a) {
+#   d = igraph::degree(graph, mode = a)
+#   dd = igraph::degree.distribution(graph, mode = a, cumulative = FALSE)
+#   degree = 1:max(d)
+#   probability = dd[-1]
+#   nonzero.position = which(probability != 0)
+#   probability = probability[nonzero.position]
+#   degree = degree[nonzero.position]
+#   
+#   TYPE<-paste0("Degree_",a)
+#   TITLErev<-paste0("Degree Distribution_",a)
+#   plotdata<-cbind(probability,degree)
+#   plotdata<-as.data.frame(plotdata)
+#   colnames(plotdata)<-c("probability","degree")
+#   #graphics::plot(probability ~ degree, log = "xy", xlab = TYPE, ylab = "Probability (log)",
+#   #     col = 1, main = TITLErev)
+#   ggplot2::ggplot(plotdata, ggplot2::aes(x=degree, y=probability)) +
+#     ggplot2::geom_line(color="darkred")+
+#     ggplot2::geom_jitter(position = "jitter",color="darkred")+
+#     ggplot2::labs(title=TITLErev,
+#                   x=TYPE, y = "Probability")+
+#     ggplot2::theme_gray()
+# }
+# 
+# 
+# plot_degree_distribution(g2, 'out')
+# library("poweRlaw")
+# library("ggplot2")
 
 
 # # List of degrees
@@ -172,30 +162,31 @@ library("ggplot2")
 #                      trans = "log10") +
 #   ggtitle("Degree Distribution (log-log)") +
 #   theme_bw()
-trans_data <- data.frame(trans_all, g_names)
-density_data <- data.frame(density_all, g_names)
-cent_data <- data.frame(cent_all, g_names)
-
-
-plot(x = 1:length(trans_all), y = trans_all)
-title
-library(ggplot2)
-
-# deg_ <- degree.distribution(g2,cumulative = T, mode = 'out')
-# plot(deg_)
-# par(new=TRUE)
-# plot(degree.distribution(g2, mode = 'out'))
+# trans_data <- data.frame(trans_all, g_names)
+# density_data <- data.frame(density_all, g_names)
+# cent_data <- data.frame(cent_all, g_names)
+# 
+# 
+# plot(x = 1:length(trans_all), y = trans_all)
+# title
+# library(ggplot2)
+# 
+# # deg_ <- degree.distribution(g2,cumulative = T, mode = 'out')
+# # plot(deg_)
+# # par(new=TRUE)
+# # plot(degree.distribution(g2, mode = 'out'))
+# # 
 # 
 
-ggplot(data = trans_data, mapping = aes(x = g_names, y = trans_all)) +
 
+ggplot(data = Trans, mapping = aes(x = Trans, y = Trans)) +
   geom_boxplot() + 
-  ggtitle('Transitivity Comparison') + 
+  ggtitle('Transitivity') + 
   xlab('Age+Cd4_ART_Intervention') + ylab('Transitivity') 
-
-
+ 
+ 
 ggplot(data = density_data, mapping = aes(x = g_names, y = density_all)) + 
   geom_boxplot() + 
-  ggtitle('Graph Density Comparison') + 
+  ggtitle('Graph Density Comparison') +
   xlab('Age+Cd4_ART_Intervention') + ylab('Density')
 
